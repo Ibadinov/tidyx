@@ -83,7 +83,7 @@ public:
     getByte    = get;
     ungetByte  = unget;
     eof        = end;
-    sourceData = (ulong) this;
+    sourceData = this;
   }
   virtual ~Source() {}
 
@@ -92,18 +92,18 @@ public:
   virtual Bool IsEOF() = 0;
 
 protected:
-  static int get( ulong data )
+  static int get( void* data )
   {
     Source* source = (Source*) data;
     return ( source ? source->GetByte() : EOF );
   }
-  static void unget( ulong data, byte bv )
+  static void unget( void* data, byte bv )
   {
     Source* source = (Source*) data;
     if ( source )
       source->UngetByte( bv );
   }
-  static Bool end( ulong data )
+  static Bool end( void* data )
   {
     Source* source = (Source*) data;
     return ( source ? source->IsEOF() : yes );
@@ -121,13 +121,13 @@ public:
   Sink()
   {
     putByte  = put;
-    sinkData = (ulong) this;
+    sinkData = this;
   }
   virtual ~Sink() {}
   virtual void PutByte( byte bv ) = 0;
 
 protected:
-  static void put( ulong data, byte bv )
+  static void put( void* data, byte bv )
   {
     Sink* sink = (Sink*) data;
     if ( sink )
@@ -162,7 +162,7 @@ public:
   { tidyBufCheckAlloc(this, buflen, chunkSize);
   }
 
-  void Attach( void* vp, uint size )  { tidyBufAttach(this, vp, size); }
+  void Attach( byte* vp, uint size )  { tidyBufAttach(this, vp, size); }
   void Detach()                       { tidyBufClear(this); }
 
   void Clear()                        { tidyBufClear(this); }
@@ -262,7 +262,7 @@ public:
 
 
     Bool IsText()        { return tidyNodeIsText( tnod() ); }
-    Bool IsHeader()      { tidyNodeIsHeader( tnod() ); } /* h1, h2, ... */
+    Bool IsHeader()      { return tidyNodeIsHeader( tnod() ); } /* h1, h2, ... */
 
     TagId Id()           { return tidyNodeGetId( tnod() ); }
 
@@ -491,9 +491,9 @@ public:
     int  Create()
     {
         Release();
-        if ( _tdoc = tidyCreate() )
+        if ( (_tdoc = tidyCreate()) )
         {
-            tidySetAppData( _tdoc, (ulong) this );
+            tidySetAppData( _tdoc, this );
             tidySetReportFilter( _tdoc, ReportFilter );
             return 0;
         }
@@ -508,8 +508,8 @@ public:
     /* Let application store a chunk of data w/ each Tidy instance.
     ** Useful for callbacks.
     */
-    void  SetAppData( ulong data ) { tidySetAppData( _tdoc, data ); }
-    ulong GetAppData()             { return tidyGetAppData( _tdoc ); }
+    void  SetAppData( void* data ) { tidySetAppData( _tdoc, data ); }
+    void* GetAppData()             { return tidyGetAppData( _tdoc ); }
 
     static ctmbstr ReleaseDate()  { return tidyReleaseDate(); }
 
@@ -566,7 +566,7 @@ public:
     Bool          OptParseValue( ctmbstr optnam, ctmbstr val )
     {   return tidyOptParseValue( _tdoc, optnam, val );
     }
-    uint          OptGetInt( OptionId optId )
+    ulong         OptGetInt( OptionId optId )
     {   return tidyOptGetInt( _tdoc, optId );
     }
     Bool          OptSetInt( OptionId optId, uint val )
